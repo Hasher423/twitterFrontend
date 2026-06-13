@@ -30,7 +30,7 @@ export default function LogoutButton({ setAccessToken }: LogoutButtonProps) {
     <button
       onClick={handleLogout}
       disabled={loading}
-      className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-black transition-colors hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-black disabled:bg-gray-100"
+      className="rounded-lg border border-zinc-800 bg-[#151515] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-black_TEMP transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-1 focus:ring-black disabled:bg-gray-100"
     >
       {loading ? 'Logging out...' : 'Log Out'}
     </button>

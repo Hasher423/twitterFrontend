@@ -8,6 +8,7 @@ import ProtectedRoute from './Components/ProtectedComponent.tsx';
 import { setupInterceptor } from './api/setupInterceptor.ts';
 import { refreshAccessToken } from './api/auth.ts';
 import Profile from './Pages/Profile.tsx';
+import Home from './Pages/Home.tsx';
 
 const AppRoutes = () => {
   const [accessToken, setAccessToken] = useState<string>('');
@@ -78,6 +79,10 @@ const AppRoutes = () => {
         <Route
           path="/dashboard"
           element={<Profile setAccessToken={setAccessToken} />}
+        />
+        <Route
+          path="/home"
+          element={<Home />}
         />
       </Route>
     </Routes>

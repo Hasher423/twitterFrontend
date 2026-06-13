@@ -1,73 +1,60 @@
-# React + TypeScript + Vite
+# Twitter Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a modern, responsive frontend for a Twitter-like application built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+*   **Modern Web Design**: A vibrant and sleek user interface inspired by dynamic web applications.
+*   **Responsive Layout**: Designed to work flawlessly on both desktop and mobile devices.
+*   **React & TypeScript**: Built with the latest React features and strongly typed with TypeScript for robustness and developer experience.
+*   **Vite**: Super-fast development server and optimized production build.
 
-## React Compiler
+## Prerequisites
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Before you begin, ensure you have met the following requirements:
 
-## Expanding the ESLint configuration
+*   Node.js (v18 or higher recommended)
+*   npm or yarn package manager
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Getting Started
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1.  **Clone the repository** (if you haven't already):
+    ```bash
+    git clone <repository-url>
+    cd "Twitter Frontend"
+    ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+3.  **Run the development server**:
+    ```bash
+    npm run dev
+    # or
+    yarn dev
+    ```
+
+4.  **Open your browser**:
+    Navigate to `http://localhost:5173` (or the port specified in your terminal) to view the application.
+
+## Building for Production
+
+To create an optimized production build:
+
+```bash
+npm run build
+# or
+yarn build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The output will be in the `dist` directory.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Technology Stack
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+*   **Core**: React, TypeScript
+*   **Build Tool**: Vite
+*   **Styling**: CSS (or specifically mentioned styling libraries if added later)
