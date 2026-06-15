@@ -5,7 +5,7 @@ import type { createdUser } from './types/user.ts';
 import Dashboard from './Pages/Dashboard.tsx';
 import Login from './Pages/Login.tsx';
 import ProtectedRoute from './Components/ProtectedComponent.tsx';
-import { setupInterceptor } from './api/setupInterceptor.ts';
+import { setInMemoryToken } from './api.ts';
 import { refreshAccessToken } from './api/auth.ts';
 import Profile from './Pages/Profile.tsx';
 import Home from './Pages/Home.tsx';
@@ -36,7 +36,7 @@ const AppRoutes = () => {
 
 
   useEffect(() => {
-    setupInterceptor(accessToken, setAccessToken);
+    setInMemoryToken(accessToken);
   }, [accessToken]);
 
 

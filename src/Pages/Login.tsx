@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../api';
 
 interface LoginProps {
   setAccessToken: (token: string) => void;
@@ -27,34 +28,22 @@ export default function Login({ setAccessToken }: LoginProps) {
     setLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, {
-        method: 'POST',
-        credentials:'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      }); 
+      const response = await api.post('/auth/login', formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Invalid email or password.');
-      }
-      setAccessToken(data.accessToken);
+      setAccessToken(response.data.accessToken);
 
       // Programmatically route to the protected dashboard
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to connect to the server.');
+      setError(err.response?.data?.message || err.message || 'Failed to connect to the server.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#151515]_TEMP font-['Inter',sans-serif] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 rounded-xl border border-zinc-800/60 bg-[#151515] p-8 shadow-sm">
+    <div className="text-white flex min-h-screen items-center justify-center bg-[#151515] font-['Inter',sans-serif] px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8 rounded-xl border border-zinc-800 bg-[#151515] p-8 shadow-sm">
         <div>
           <h2 className="text-center text-2xl font-bold tracking-tight text-black_TEMP">
             Sign in to your account
@@ -65,7 +54,7 @@ export default function Login({ setAccessToken }: LoginProps) {
         </div>
 
         {error && (
-          <div className="rounded-lg bg-zinc-800 p-4 text-xs text-black_TEMP border border-zinc-800">
+          <div className="rounded-lg bg-zinc-800 p-4 text-xs text-white border border-zinc-800">
             <p className="font-medium">{error}</p>
           </div>
         )}
@@ -73,7 +62,7 @@ export default function Login({ setAccessToken }: LoginProps) {
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+              <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
                 Email address
               </label>
               <input
@@ -89,7 +78,7 @@ export default function Login({ setAccessToken }: LoginProps) {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+              <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-white mb-1">
                 Password
               </label>
               <input
@@ -109,7 +98,7 @@ export default function Login({ setAccessToken }: LoginProps) {
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full justify-center rounded-lg bg-[#151515]_TEMP py-2.5 px-4 text-sm font-medium text-black transition-all duration-150 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:bg-gray-300"
+              className="flex w-full justify-center rounded-lg bg-[#151515]_TEMP py-2.5 px-4 text-sm font-medium text-black transition-all bg-white duration-150 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:bg-gray-300"
             >
               {loading ? (
                 <span className="flex items-center space-x-2">

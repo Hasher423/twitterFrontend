@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../api';
+
+interface Comment {
+  id: string;
+  content: string;
+  author: {
+    username: string;
+  };
+  createdAt: string;
+}
 
 // Mock type for a post
 interface Post {
@@ -10,6 +20,8 @@ interface Post {
   }
   content: string;
   createdAt: string;
+  comments?: Comment[];
+  likes?: number[]
 }
 
 export default function Home() {
@@ -18,7 +30,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [postContent, setPostContent] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState('');
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
   const createPost = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,25 +40,14 @@ export default function Home() {
     setIsCreating(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/post/create`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: postContent })
-      });
+      const response = await api.post('/post/create', { content: postContent });
 
-      if (!response.ok) {
-        throw new Error('Failed to create post');
-      }
-
-      const data = await response.json();
+      const data = response.data;
 
       const newPost = data.post || {
         id: Date.now().toString(),
         author: {
-          username:'@me'
+          username: '@me'
         },
         content: postContent,
         createdAt: 'Just now'
@@ -59,7 +62,86 @@ export default function Home() {
     }
   };
 
+  const createComment = async (postId: string) => {
+    if (!replyContent.trim()) return;
+    setIsSubmittingReply(true);
 
+    try {
+      const response = await api.post(`/comment/create/${postId}`, {
+        content: replyContent
+      });
+
+      const data = response.data;
+      const newComment = data.comment || {
+        id: Date.now().toString(),
+        author: { username: '@me' },
+        content: replyContent,
+        createdAt: 'Just now'
+      };
+
+      setPosts(posts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            comments: [...(post.comments || []), newComment]
+          };
+        }
+        return post;
+      }));
+      setReplyingToId(null);
+      setReplyContent('');
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
+  const addLike = async (postId: string) => {
+    setPosts(prevPosts => prevPosts.map(post => {
+      if (post.id === postId) {
+        return {
+          ...post,
+          likes: [...(post.likes || []), Date.now()]
+        };
+      }
+      return post;
+    }));
+
+    try {
+      const response = await api.post(`/like/add/${postId}`, {
+        params: {
+          postId: postId,
+        }
+      });
+      
+      const responseMessage = response.data?.message || '';
+      if (responseMessage.toLowerCase().includes('already') || responseMessage.toLowerCase().includes('liked')) {
+        throw new Error(responseMessage);
+      }
+
+      if (response.status !== 201 && response.status !== 200) {
+        throw new Error('Failed to like post');
+      }
+    } catch (error: any) {
+      console.error(error);
+      const errorMessage = error.response?.data?.message || error.message || '';
+
+      // Revert the like on failure
+      setPosts(prevPosts => prevPosts.map(post => {
+        if (post.id === postId) {
+          const newLikes = [...(post.likes || [])];
+          newLikes.pop(); // Remove the optimistically added like
+          return { ...post, likes: newLikes };
+        }
+        return post;
+      }));
+      
+      if (errorMessage.toLowerCase().includes('already') || errorMessage.toLowerCase().includes('liked')) {
+        alert('You already have liked it');
+      }
+    }
+  }
 
   useEffect(() => {
 
@@ -68,21 +150,11 @@ export default function Home() {
       setLoading(true);
 
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/post/getPosts`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
+        const response = await api.get('/post/getPosts');
 
-
-        const data = await response.json();
+        const data = response.data;
         console.log(data)
 
-        if (!response.ok) {
-          throw new Error(data.message || 'Invalid email or password.');
-        }
         setPosts(data.posts);
 
       } catch (err: any) {
@@ -100,18 +172,18 @@ export default function Home() {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return dateString;
-      
+
       const now = new Date();
       const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-      
+
       if (diffInSeconds < 60) return `Just now`;
       if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
       if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
-      
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined 
+
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
       });
     } catch {
       return dateString;
@@ -187,19 +259,70 @@ export default function Home() {
 
                     {/* Action Buttons */}
                     <div className="mt-3 flex items-center space-x-6 text-gray-500">
-                      <button className="hover:text-white transition-colors flex items-center space-x-1">
+                      <button
+                        onClick={() => {
+                          setReplyingToId(replyingToId === post.id ? null : post.id);
+                          setReplyContent('');
+                        }}
+                        className="hover:text-white transition-colors flex items-center space-x-1"
+                      >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                         <span className="text-xs">Reply</span>
                       </button>
-                      <button className="hover:text-white transition-colors flex items-center space-x-1">
+                      <button
+                        onClick={() => addLike(post.id)}
+                        className="hover:text-white transition-colors flex items-center space-x-1">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
-                        <span className="text-xs">Like</span>
+                        <span className="text-xs">{post.likes?.length}</span>
                       </button>
                     </div>
+
+                    {/* Reply Input */}
+                    {replyingToId === post.id && (
+                      <div className="mt-4 flex space-x-3">
+                        <div className="flex-1">
+                          <textarea
+                            autoFocus
+                            className="w-full rounded-lg border border-zinc-800 bg-[#151515] p-3 text-sm text-white placeholder-gray-500 focus:border-white focus:outline-none focus:ring-1 focus:ring-white resize-none"
+                            placeholder="Post your reply"
+                            rows={2}
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                          />
+                          <div className="mt-2 flex justify-end">
+                            <button
+                              onClick={() => createComment(post.id)}
+                              disabled={isSubmittingReply || !replyContent.trim()}
+                              className="rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-black hover:bg-gray-200 transition-colors disabled:opacity-50"
+                            >
+                              {isSubmittingReply ? 'Replying...' : 'Reply'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Comments List */}
+                    {post.comments && post.comments.length > 0 && (
+                      <div className="mt-4 space-y-4 border-t border-zinc-800/60 pt-4">
+                        {post.comments.map(comment => (
+                          <div key={comment.id} className="flex space-x-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-1 text-xs">
+                                <span className="font-bold text-gray-200 truncate">{comment.author?.username}</span>
+                                <span className="text-gray-500">·</span>
+                                <span className="text-gray-500">{formatDate(comment.createdAt)}</span>
+                              </div>
+                              <p className="mt-1 text-sm text-gray-300 whitespace-pre-wrap">{comment.content}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
